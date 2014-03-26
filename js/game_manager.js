@@ -47,12 +47,14 @@ GameManager.prototype.setup = function () {
     this.over        = previousState.over;
     this.won         = previousState.won;
     this.keepPlaying = previousState.keepPlaying;
+    this.knownFibs   = previousState.knownFibs;
   } else {
     this.grid        = new Grid(this.size);
     this.score       = 0;
     this.over        = false;
     this.won         = false;
     this.keepPlaying = false;
+    this.knownFibs   = [1,2,3];
 
     // Add the initial tiles
     this.addStartTiles();
@@ -72,7 +74,7 @@ GameManager.prototype.addStartTiles = function () {
 // Adds a tile in a random position
 GameManager.prototype.addRandomTile = function () {
   if (this.grid.cellsAvailable()) {
-    var value = Math.random() < 0.9 ? 2 : 4;
+    var value = Math.random() < 0.7 ? 1 : 2;
     var tile = new Tile(this.grid.randomAvailableCell(), value);
 
     this.grid.insertTile(tile);
@@ -109,7 +111,8 @@ GameManager.prototype.serialize = function () {
     score:       this.score,
     over:        this.over,
     won:         this.won,
-    keepPlaying: this.keepPlaying
+    keepPlaying: this.keepPlaying,
+    knownFibs:   this.knownFibs
   };
 };
 
@@ -157,8 +160,14 @@ GameManager.prototype.move = function (direction) {
         var next      = self.grid.cellContent(positions.next);
 
         // Only one merger per row traversal?
-        if (next && next.value === tile.value && !next.mergedFrom) {
-          var merged = new Tile(positions.next, tile.value * 2);
+        if (next &&  self.knownFibs.indexOf(next.value + tile.value) != -1 && !next.mergedFrom) {
+          var fibIdx = self.knownFibs.indexOf(next.value + tile.value);
+          // update knownFibs
+          if(fibIdx == self.knownFibs.length -1){
+        	  self.knownFibs.push(self.knownFibs[fibIdx -1] + self.knownFibs[fibIdx]);
+          }
+        	
+          var merged = new Tile(positions.next, next.value + tile.value);
           merged.mergedFrom = [tile, next];
 
           self.grid.insertTile(merged);
@@ -170,8 +179,8 @@ GameManager.prototype.move = function (direction) {
           // Update the score
           self.score += merged.value;
 
-          // The mighty 2048 tile
-          if (merged.value === 2048) self.won = true;
+          // The mighty 2584 tile
+          if (merged.value === 2584) self.won = true;
         } else {
           self.moveTile(tile, positions.farthest);
         }
