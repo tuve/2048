@@ -269,7 +269,7 @@ GameManager.prototype.tileMatchesAvailable = function () {
 
           var other  = self.grid.cellContent(cell);
 
-          if (other && other.value === tile.value) {
+          if (other && self.knownFibs.indexOf(other.value + tile.value) != -1) {
             return true; // These two tiles can be merged
           }
         }
